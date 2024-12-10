@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using System.Linq.Expressions;
+using FluentValidation;
 
 namespace ValueOf;
 
@@ -9,6 +10,8 @@ public abstract class ValueOf<T, TDerived>
     public T Value { get; }
 
     public AbstractValidator<T> Validator { get; }
+
+    private static readonly Func<T, TDerived> _factory;
 
     protected ValueOf(T value)
         : this(value, new NoOpValidator<T>()) { }
@@ -22,10 +25,30 @@ public abstract class ValueOf<T, TDerived>
         Validator = validator;
     }
 
+    static ValueOf()
+    {
+        var constructor =
+            typeof(TDerived)
+                .GetConstructors()
+                .FirstOrDefault(static ctor =>
+                {
+                    var parameters = ctor.GetParameters();
+                    bool has1Param = parameters.Length == 1;
+                    bool hasParamT = parameters[0].ParameterType == typeof(T);
+                    return has1Param && hasParamT;
+                })
+            ?? throw new InvalidOperationException(
+                $"Type {typeof(TDerived)} must have a constructor with a single {typeof(T)} parameter."
+            );
+        var param = Expression.Parameter(typeof(T), "value");
+        var newExpression = Expression.New(constructor, param);
+        var lambda = Expression.Lambda<Func<T, TDerived>>(newExpression, param);
+        _factory = lambda.Compile();
+    }
+
     public R Transform<R>(Func<T, R> transform) => transform(Value);
 
-    public TDerived Transform(Func<T, T> transform) =>
-        (TDerived)Activator.CreateInstance(typeof(TDerived), transform(Value))!;
+    public TDerived Transform(Func<T, T> transform) => _factory(transform(Value));
 
     public T Unwrap() => Value;
 
@@ -38,8 +61,7 @@ public abstract class ValueOf<T, TDerived>
 
     public static implicit operator T(ValueOf<T, TDerived> valueOf) => valueOf.Value;
 
-    public static explicit operator ValueOf<T, TDerived>(T value) =>
-        (ValueOf<T, TDerived>)Activator.CreateInstance(typeof(TDerived), value)!;
+    public static explicit operator ValueOf<T, TDerived>(T value) => _factory(value);
 }
 
 public class NonBlankString<TDerived>(string value, AbstractValidator<string> validator)
