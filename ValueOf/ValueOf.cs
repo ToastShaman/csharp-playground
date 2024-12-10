@@ -24,6 +24,11 @@ public abstract class ValueOf<T, TDerived>
 
     public R Transform<R>(Func<T, R> transform) => transform(Value);
 
+    public TDerived Transform(Func<T, T> transform) =>
+        (TDerived)Activator.CreateInstance(typeof(TDerived), transform(Value))!;
+
+    public T Unwrap() => Value;
+
     public override bool Equals(object? obj) =>
         obj is ValueOf<T, TDerived> other && EqualityComparer<T>.Default.Equals(Value, other.Value);
 

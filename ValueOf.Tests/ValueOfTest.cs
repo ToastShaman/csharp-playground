@@ -67,6 +67,16 @@ public class ValueOfTest
         raw.Should().Be("John");
     }
 
+    [Fact(DisplayName = "Transforms")]
+    public void Transforms()
+    {
+        Firstname name = new("John");
+
+        Firstname transformed = name.Transform(static x => x.ToUpper());
+
+        transformed.Value.Should().Be("JOHN");
+    }
+
     [Fact(DisplayName = "Secret string should be masked")]
     public void SecretStringToString()
     {
