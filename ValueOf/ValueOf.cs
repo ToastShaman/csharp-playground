@@ -37,6 +37,14 @@ public abstract class ValueOf<T, TDerived>
         (ValueOf<T, TDerived>)Activator.CreateInstance(typeof(TDerived), value)!;
 }
 
+public class NonBlankString<TDerived>(string value, AbstractValidator<string> validator)
+    : ValueOf<string, TDerived>(value, validator)
+    where TDerived : ValueOf<string, TDerived>
+{
+    public NonBlankString(string value)
+        : this(value, new NonBlankStringValidator()) { }
+}
+
 public class NonBlankStringValidator : AbstractValidator<string>
 {
     public NonBlankStringValidator()
