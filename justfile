@@ -1,5 +1,6 @@
-test:
+test: fmt
     dotnet test
 
 fmt:
-    dotnet format
+    # dotnet tool install csharpier -g
+    dotnet csharpier .

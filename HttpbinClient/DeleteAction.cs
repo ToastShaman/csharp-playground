@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace HttpbinClient;
 
-public class GetAction : IHttpbinAction<GetActionResponse>
+public class DeleteAction : IHttpbinAction<DeleteActionResponse>
 {
     private readonly JsonSerializerOptions _options = new()
     {
@@ -11,12 +11,12 @@ public class GetAction : IHttpbinAction<GetActionResponse>
     };
 
     public HttpRequestMessage ToRequest(Uri baseUri) =>
-        new(HttpMethod.Get, new Uri(baseUri, "/get"))
+        new(HttpMethod.Delete, new Uri(baseUri, "/delete"))
         {
             Headers = { { "Accept", "application/json" } },
         };
 
-    public async Task<GetActionResponse> FromResponseAsync(
+    public async Task<DeleteActionResponse> FromResponseAsync(
         HttpResponseMessage response,
         CancellationToken cancellationToken
     )
@@ -28,16 +28,17 @@ public class GetAction : IHttpbinAction<GetActionResponse>
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         var result =
-            JsonSerializer.Deserialize<GetActionResponse>(content, _options)
-            ?? throw new InvalidOperationException("Failed to deserialize /get response");
+            JsonSerializer.Deserialize<DeleteActionResponse>(content, _options)
+            ?? throw new InvalidOperationException("Failed to deserialize /delete response");
 
         return result;
     }
 }
 
-public record GetActionResponse(
+public record DeleteActionResponse(
     Dictionary<string, object> Args,
     Dictionary<string, string> Headers,
+    string Data,
     string Origin,
     string Url
 ) { }

@@ -1,14 +1,19 @@
 ﻿namespace HttpbinClient;
 
-public class HttpbinApi(Uri baseUri, HttpClient client)
+public class HttpbinApi(Uri baseUri, HttpClient client) : IHttpbinApi
 {
     private readonly Uri _baseUri = baseUri ?? throw new ArgumentNullException(nameof(baseUri));
-    
+
     private readonly HttpClient _client = client ?? throw new ArgumentNullException(nameof(client));
 
-    public async Task<R> ExecuteAsync<R>(IHttpbinAction<R> action) where R : class => await ExecuteAsync(action, CancellationToken.None);
+    public async Task<R> ExecuteAsync<R>(IHttpbinAction<R> action)
+        where R : class => await ExecuteAsync(action, CancellationToken.None);
 
-    public async Task<R> ExecuteAsync<R>(IHttpbinAction<R> action, CancellationToken cancellationToken) where R : class
+    public async Task<R> ExecuteAsync<R>(
+        IHttpbinAction<R> action,
+        CancellationToken cancellationToken
+    )
+        where R : class
     {
         ArgumentNullException.ThrowIfNull(action);
 
