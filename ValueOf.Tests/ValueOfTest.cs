@@ -5,9 +5,10 @@ namespace ValueOf.Tests;
 
 public class ValueOfTest
 {
-    class Firstname(string value) : NonBlankString<Firstname>(value) { }
+    class Firstname(string value)
+        : ValueOf<string, Firstname>(value, new NonBlankStringValidator()) { }
 
-    class Email(string value) : NonBlankString<Email>(value, new Validator())
+    class Email(string value) : ValueOf<string, Email>(value, new Validator())
     {
         private class Validator : AbstractValidator<string>
         {
