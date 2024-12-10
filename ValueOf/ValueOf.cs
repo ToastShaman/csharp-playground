@@ -8,11 +8,10 @@ public abstract class ValueOf<T, TDerived>
 {
     public T Value { get; }
 
+    public AbstractValidator<T> Validator { get; }
+
     protected ValueOf(T value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-        Value = value;
-    }
+        : this(value, new NoOpValidator<T>()) { }
 
     protected ValueOf(T value, AbstractValidator<T> validator)
     {
@@ -20,6 +19,7 @@ public abstract class ValueOf<T, TDerived>
         ArgumentNullException.ThrowIfNull(validator);
         validator.ValidateAndThrow(value);
         Value = value;
+        Validator = validator;
     }
 
     public R Transform<R>(Func<T, R> transform) => transform(Value);
@@ -56,5 +56,23 @@ public class NonBlankStringValidator : AbstractValidator<string>
             .WithMessage("String must not be empty")
             .Must(x => !string.IsNullOrWhiteSpace(x))
             .WithMessage("String must not be whitespace");
+    }
+}
+
+public class SecretString<TDerived>(string value, AbstractValidator<string> validator)
+    : ValueOf<string, TDerived>(value, validator)
+    where TDerived : ValueOf<string, TDerived>
+{
+    public SecretString(string value)
+        : this(value, new NonBlankStringValidator()) { }
+
+    public override string ToString() => "********";
+}
+
+public class NoOpValidator<T> : AbstractValidator<T>
+{
+    public NoOpValidator()
+    {
+        // No rules are added, so this validator does nothing
     }
 }

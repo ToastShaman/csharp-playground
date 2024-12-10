@@ -5,13 +5,15 @@ namespace ValueOf.Tests;
 
 public class ValueOfTest
 {
+    class MySecret(string value) : SecretString<MySecret>(value) { }
+
     class Firstname(string value) : NonBlankString<Firstname>(value) { }
 
-    class Email(string value) : ValueOf<string, Email>(value, new Validator())
+    class Email(string value) : ValueOf<string, Email>(value, new EmailValidator())
     {
-        private class Validator : AbstractValidator<string>
+        public class EmailValidator : AbstractValidator<string>
         {
-            public Validator()
+            public EmailValidator()
             {
                 RuleFor(x => x)
                     .SetValidator(new NonBlankStringValidator())
@@ -63,5 +65,11 @@ public class ValueOfTest
         string raw = (string)name;
 
         raw.Should().Be("John");
+    }
+
+    [Fact(DisplayName = "Secret string should be masked")]
+    public void SecretStringToString()
+    {
+        new MySecret("password").ToString().Should().Be("********");
     }
 }
