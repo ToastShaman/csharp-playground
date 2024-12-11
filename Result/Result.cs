@@ -1,6 +1,8 @@
 ﻿namespace Result;
 
 public interface IResult<S, F>
+    where S : notnull
+    where F : notnull
 {
     public static IResult<S, F> Success(S value) => new Success<S, F>(value);
 
@@ -14,13 +16,17 @@ public interface IResult<S, F>
 
     public IResult<S, F> OnFailure(Action<F> action);
 
-    public IResult<R, F> Map<R>(Func<S, R> transform);
+    public IResult<R, F> Map<R>(Func<S, R> transform)
+        where R : notnull;
 
-    public IResult<R, F> FlatMap<R>(Func<S, IResult<R, F>> transform);
+    public IResult<R, F> FlatMap<R>(Func<S, IResult<R, F>> transform)
+        where R : notnull;
 
-    public IResult<S, R> MapFailure<R>(Func<F, R> transform);
+    public IResult<S, R> MapFailure<R>(Func<F, R> transform)
+        where R : notnull;
 
-    public IResult<S, R> FlatMapFailure<R>(Func<F, IResult<S, R>> transform);
+    public IResult<S, R> FlatMapFailure<R>(Func<F, IResult<S, R>> transform)
+        where R : notnull;
 
     public R Fold<R>(Func<S, R> ifSuccess, Func<F, R> ifFailure);
 
@@ -34,6 +40,8 @@ public interface IResult<S, F>
 }
 
 public class Success<S, F> : IResult<S, F>
+    where S : notnull
+    where F : notnull
 {
     private readonly S _value;
 
@@ -49,13 +57,17 @@ public class Success<S, F> : IResult<S, F>
 
     public S? GetOrDefault() => _value;
 
-    public IResult<R, F> Map<R>(Func<S, R> transform) => new Success<R, F>(transform(_value));
+    public IResult<R, F> Map<R>(Func<S, R> transform)
+        where R : notnull => new Success<R, F>(transform(_value));
 
-    public IResult<R, F> FlatMap<R>(Func<S, IResult<R, F>> transform) => transform(_value);
+    public IResult<R, F> FlatMap<R>(Func<S, IResult<R, F>> transform)
+        where R : notnull => transform(_value);
 
-    public IResult<S, R> MapFailure<R>(Func<F, R> transform) => (IResult<S, R>)this;
+    public IResult<S, R> MapFailure<R>(Func<F, R> transform)
+        where R : notnull => (IResult<S, R>)this;
 
-    public IResult<S, R> FlatMapFailure<R>(Func<F, IResult<S, R>> transform) => (IResult<S, R>)this;
+    public IResult<S, R> FlatMapFailure<R>(Func<F, IResult<S, R>> transform)
+        where R : notnull => (IResult<S, R>)this;
 
     public R Fold<R>(Func<S, R> ifSuccess, Func<F, R> ifFailure) => ifSuccess(_value);
 
@@ -77,6 +89,8 @@ public class Success<S, F> : IResult<S, F>
 }
 
 public class Failure<S, F> : IResult<S, F>
+    where S : notnull
+    where F : notnull
 {
     private readonly F _value;
 
@@ -92,14 +106,17 @@ public class Failure<S, F> : IResult<S, F>
 
     public S? GetOrDefault() => default;
 
-    public IResult<R, F> Map<R>(Func<S, R> transform) => (IResult<R, F>)this;
+    public IResult<R, F> Map<R>(Func<S, R> transform)
+        where R : notnull => (IResult<R, F>)this;
 
-    public IResult<R, F> FlatMap<R>(Func<S, IResult<R, F>> transform) => (IResult<R, F>)this;
+    public IResult<R, F> FlatMap<R>(Func<S, IResult<R, F>> transform)
+        where R : notnull => (IResult<R, F>)this;
 
-    public IResult<S, R> MapFailure<R>(Func<F, R> transform) =>
-        new Failure<S, R>(transform(_value));
+    public IResult<S, R> MapFailure<R>(Func<F, R> transform)
+        where R : notnull => new Failure<S, R>(transform(_value));
 
-    public IResult<S, R> FlatMapFailure<R>(Func<F, IResult<S, R>> transform) => transform(_value);
+    public IResult<S, R> FlatMapFailure<R>(Func<F, IResult<S, R>> transform)
+        where R : notnull => transform(_value);
 
     public R Fold<R>(Func<S, R> ifSuccess, Func<F, R> ifFailure) => ifFailure(_value);
 
