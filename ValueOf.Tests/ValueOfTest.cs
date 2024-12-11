@@ -9,20 +9,16 @@ public class ValueOfTest
 
     class Firstname(string value) : NonBlankString<Firstname>(value) { }
 
-    class Email(string value) : ValueOf<string, Email>(value, new EmailValidator())
+    class Email(string value) : ValueOf<string, Email>(value, new Validator())
     {
-        public class EmailValidator : AbstractValidator<string>
+        public class Validator : AbstractValidator<string>
         {
-            public EmailValidator()
+            public Validator()
             {
-                RuleFor(x => x)
-                    .SetValidator(new NonBlankStringValidator())
-                    .EmailAddress()
-                    .WithMessage("Email must be a valid email address");
+                Include(new NonBlankStringValidator());
+                RuleFor(x => x).EmailAddress().WithMessage("Email must be a valid email address");
             }
         }
-
-        public static explicit operator Email(string value) => new(value);
     }
 
     [Fact(DisplayName = "Equals and GetHashCode")]
@@ -72,9 +68,9 @@ public class ValueOfTest
     {
         Firstname name = new("John");
 
-        Firstname transformed = name.Transform(static x => x.ToUpper());
+        Firstname transformed = name.Map(static x => x.ToUpper());
 
-        transformed.Value.Should().Be("JOHN");
+        transformed.Unwrap().Should().Be("JOHN");
     }
 
     [Fact(DisplayName = "Secret string should be masked")]

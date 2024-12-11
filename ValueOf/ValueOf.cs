@@ -7,22 +7,19 @@ public abstract class ValueOf<T, TDerived>
     where T : notnull
     where TDerived : ValueOf<T, TDerived>
 {
-    public T Value { get; }
-
-    public AbstractValidator<T> Validator { get; }
-
     private static readonly Func<T, TDerived> _factory;
 
-    protected ValueOf(T value)
+    private readonly T _value;
+
+    public ValueOf(T value)
         : this(value, new NoOpValidator<T>()) { }
 
-    protected ValueOf(T value, AbstractValidator<T> validator)
+    public ValueOf(T value, AbstractValidator<T> validator)
     {
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(validator);
         validator.ValidateAndThrow(value);
-        Value = value;
-        Validator = validator;
+        _value = value;
     }
 
     static ValueOf()
@@ -33,36 +30,38 @@ public abstract class ValueOf<T, TDerived>
                 .FirstOrDefault(static ctor =>
                 {
                     var parameters = ctor.GetParameters();
-                    bool has1Param = parameters.Length == 1;
-                    bool hasParamT = parameters[0].ParameterType == typeof(T);
+                    var has1Param = parameters.Length == 1;
+                    var hasParamT = parameters[0].ParameterType == typeof(T);
                     return has1Param && hasParamT;
-                })
-            ?? throw new InvalidOperationException(
-                $"Type {typeof(TDerived)} must have a constructor with a single {typeof(T)} parameter."
-            );
+                }) ?? throw new FailedToCreateValueTypeException(typeof(TDerived), typeof(T));
+
         var param = Expression.Parameter(typeof(T), "value");
         var newExpression = Expression.New(constructor, param);
         var lambda = Expression.Lambda<Func<T, TDerived>>(newExpression, param);
         _factory = lambda.Compile();
     }
 
-    public R Transform<R>(Func<T, R> transform) => transform(Value);
+    public TDerived Map(Func<T, T> transform) => _factory(transform(_value));
 
-    public TDerived Transform(Func<T, T> transform) => _factory(transform(Value));
+    public R Unwrap<R>(Func<T, R> transform) => transform(_value);
 
-    public T Unwrap() => Value;
+    public T Unwrap() => _value;
 
     public override bool Equals(object? obj) =>
-        obj is ValueOf<T, TDerived> other && EqualityComparer<T>.Default.Equals(Value, other.Value);
+        obj is ValueOf<T, TDerived> other
+        && EqualityComparer<T>.Default.Equals(_value, other._value);
 
-    public override int GetHashCode() => Value.GetHashCode();
+    public override int GetHashCode() => _value.GetHashCode();
 
-    public override string ToString() => Value.ToString() ?? string.Empty;
+    public override string ToString() => _value.ToString() ?? string.Empty;
 
-    public static implicit operator T(ValueOf<T, TDerived> valueOf) => valueOf.Value;
+    public static implicit operator T(ValueOf<T, TDerived> valueOf) => valueOf._value;
 
     public static explicit operator ValueOf<T, TDerived>(T value) => _factory(value);
 }
+
+public class FailedToCreateValueTypeException(Type clazz, Type parameter)
+    : Exception($"Type {clazz} must have a constructor with a single {parameter} parameter.") { }
 
 public class NonBlankString<TDerived>(string value, AbstractValidator<string> validator)
     : ValueOf<string, TDerived>(value, validator)
