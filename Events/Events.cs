@@ -113,21 +113,21 @@ public class FuncEventFilter : IEventFilter
     public IEvents Filter(IEvents events) => _f(events);
 }
 
-public record MetadataEvent : IEvent
+public class MetadataEvent : IEvent
 {
     public IEvent Event { get; }
 
     public ImmutableDictionary<string, object> Metadata { get; }
 
-    public MetadataEvent(IEvent Event, ImmutableDictionary<string, object> Metadata)
+    public MetadataEvent(IEvent @event, ImmutableDictionary<string, object> metadata)
     {
-        ArgumentNullException.ThrowIfNull(Event);
-        ArgumentNullException.ThrowIfNull(Metadata);
-        if (Event is MetadataEvent)
-            throw new ArgumentException("Event cannot be a MetadataEvent", nameof(Event));
+        ArgumentNullException.ThrowIfNull(@event);
+        ArgumentNullException.ThrowIfNull(metadata);
+        if (@event is MetadataEvent)
+            throw new ArgumentException("Event cannot be a MetadataEvent", nameof(@event));
 
-        this.Event = Event;
-        this.Metadata = Metadata;
+        Event = @event;
+        Metadata = metadata;
     }
 
     public MetadataEvent(IEvent e)
