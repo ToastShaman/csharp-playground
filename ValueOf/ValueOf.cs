@@ -53,6 +53,8 @@ public abstract class ValueOf<T, TDerived>
 
     public override int GetHashCode() => _value.GetHashCode();
 
+    public static TDerived Create(T value) => _factory(value);
+
     public override string ToString() => _value.ToString() ?? string.Empty;
 
     public static implicit operator T(ValueOf<T, TDerived> valueOf) => valueOf._value;
