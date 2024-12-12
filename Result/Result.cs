@@ -1,5 +1,71 @@
 ﻿namespace Result;
 
+public static class Result
+{
+    public static IResult<S, F> Success<S, F>(S value)
+        where S : notnull
+        where F : notnull => new Success<S, F>(value);
+
+    public static IResult<S, F> Failure<S, F>(F error)
+        where S : notnull
+        where F : notnull => new Failure<S, F>(error);
+
+    public static IResult<S, Exception> Run<S>(Func<S> action)
+        where S : notnull
+    {
+        try
+        {
+            return Success<S, Exception>(action());
+        }
+        catch (Exception e)
+        {
+            return Failure<S, Exception>(e);
+        }
+    }
+
+    public static IResult<Z, F> Zip<S1, S2, F, Z>(
+        IResult<S1, F> r1,
+        IResult<S2, F> r2,
+        Func<S1, S2, Z> f
+    )
+        where S1 : notnull
+        where S2 : notnull
+        where F : notnull
+        where Z : notnull => r1.FlatMap(value1 => r2.Map(value2 => f(value1, value2)));
+
+    public static IResult<Z, F> Zip<S1, S2, S3, F, Z>(
+        IResult<S1, F> r1,
+        IResult<S2, F> r2,
+        IResult<S3, F> r3,
+        Func<S1, S2, S3, Z> f
+    )
+        where S1 : notnull
+        where S2 : notnull
+        where S3 : notnull
+        where F : notnull
+        where Z : notnull =>
+        r1.FlatMap(value1 => r2.FlatMap(value2 => r3.Map(value3 => f(value1, value2, value3))));
+
+    public static IResult<Z, F> Zip<S1, S2, S3, S4, F, Z>(
+        IResult<S1, F> r1,
+        IResult<S2, F> r2,
+        IResult<S3, F> r3,
+        IResult<S4, F> r4,
+        Func<S1, S2, S3, S4, Z> f
+    )
+        where S1 : notnull
+        where S2 : notnull
+        where S3 : notnull
+        where S4 : notnull
+        where F : notnull
+        where Z : notnull =>
+        r1.FlatMap(value1 =>
+            r2.FlatMap(value2 =>
+                r3.FlatMap(value3 => r4.Map(value4 => f(value1, value2, value3, value4)))
+            )
+        );
+}
+
 public interface IResult<S, F>
     where S : notnull
     where F : notnull
