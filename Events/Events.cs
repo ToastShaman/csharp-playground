@@ -48,6 +48,15 @@ public static class EventFilters
     public static IEventFilter AddEnvironment(string environment) =>
         AddStatic("Environment", environment);
 
+    public static IEventFilter AddEventName() =>
+        EventFilter.Create(events =>
+            Events.Create(e =>
+            {
+                var raw = (e is MetadataEvent me) ? me.Event : e;
+                events.Emit(e.AddMetadata("EventName", raw.GetType().Name));
+            })
+        );
+
     public static IEventFilter AddTimestamp() => AddStatic("Timestamp", DateTime.UtcNow);
 
     public static IEventFilter AddStatic(string key, object value) =>
