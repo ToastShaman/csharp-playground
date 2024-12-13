@@ -1,0 +1,8 @@
+@WeatherForecast.API_HostAddress = http://localhost:5105
+
+GET {{WeatherForecast.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+GET https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41
+Accept: application/json

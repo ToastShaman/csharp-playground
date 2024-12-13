@@ -4,7 +4,7 @@ namespace HttpbinClient;
 
 public class DeleteAction : IHttpbinAction<DeleteActionResponse>
 {
-    private readonly JsonSerializerOptions _options = new()
+    private static readonly JsonSerializerOptions _options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         RespectNullableAnnotations = true,

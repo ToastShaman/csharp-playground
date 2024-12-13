@@ -3,7 +3,10 @@
 public interface IHttpbinAction<R>
     where R : class
 {
-    HttpRequestMessage ToRequest(Uri baseUri);
+    public HttpRequestMessage ToRequest(Uri baseUri);
 
-    Task<R> FromResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken);
+    public Task<R> FromResponseAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken
+    );
 }
