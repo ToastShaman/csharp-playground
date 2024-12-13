@@ -23,10 +23,20 @@ public class LoggingHttpHandler : DelegatingHandler
 {
     private readonly IEvents _events;
 
-    public LoggingHttpHandler(IEvents events)
+    private readonly Func<string> _requestId;
+    
+    private readonly string _headerName;
+
+    public LoggingHttpHandler(IEvents events) : this(events, () => string.Empty) { }
+
+    public LoggingHttpHandler(IEvents events, Func<string> requestId, string headerName = "X-Request-ID")
     {
         ArgumentNullException.ThrowIfNull(events);
+        ArgumentNullException.ThrowIfNull(requestId);
+        ArgumentNullException.ThrowIfNull(headerName);
         _events = events;
+        _requestId = requestId;
+        _headerName = headerName;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -34,7 +44,7 @@ public class LoggingHttpHandler : DelegatingHandler
         CancellationToken cancellationToken
     )
     {
-        request.Headers.TryAddWithoutValidation("X-Correlation-ID", Guid.NewGuid().ToString());
+        request.Headers.TryAddWithoutValidation(_headerName, _requestId());
 
         var requestHeaders = request.Headers.ToDictionary();
 
