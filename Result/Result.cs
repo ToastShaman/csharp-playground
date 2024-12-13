@@ -10,7 +10,7 @@ public static class Result
         where S : notnull
         where F : notnull => new Failure<S, F>(error);
 
-    public static IResult<S, Exception> Run<S>(Func<S> action)
+    public static IResult<S, Exception> TryCall<S>(Func<S> action)
         where S : notnull
     {
         try
