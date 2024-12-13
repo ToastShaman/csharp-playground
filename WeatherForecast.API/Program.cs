@@ -20,15 +20,21 @@ builder.Services.AddSingleton<IOpenMeteoApi>(provider =>
         var context =
             provider.GetRequiredService<IHttpContextAccessor>().HttpContext
             ?? throw new InvalidOperationException("No HttpContext");
-            return Middlewares.RequestIdLens.Get(context);
+        return Middlewares.RequestIdLens.Get(context);
     }
 
     var handler = new LoggingHttpHandler(events, requestId)
     {
         InnerHandler = new HttpClientHandler(),
     };
-    var client = new HttpClient(handler);
-    var baseUrl = new Uri(builder.Configuration["WeatherForecastAPI:BaseUrl"]!);
+
+    var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+
+    var baseUrl = new Uri(
+        builder.Configuration["WeatherForecastAPI:BaseUrl"]
+            ?? throw new InvalidOperationException("Missing WeatherForecastAPI:BaseUrl")
+    );
+
     return new OpenMeteoApi(baseUrl, client);
 });
 

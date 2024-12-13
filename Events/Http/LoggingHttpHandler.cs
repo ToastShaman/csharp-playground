@@ -24,12 +24,17 @@ public class LoggingHttpHandler : DelegatingHandler
     private readonly IEvents _events;
 
     private readonly Func<string> _requestId;
-    
+
     private readonly string _headerName;
 
-    public LoggingHttpHandler(IEvents events) : this(events, () => string.Empty) { }
+    public LoggingHttpHandler(IEvents events)
+        : this(events, () => string.Empty) { }
 
-    public LoggingHttpHandler(IEvents events, Func<string> requestId, string headerName = "X-Request-ID")
+    public LoggingHttpHandler(
+        IEvents events,
+        Func<string> requestId,
+        string headerName = "X-Request-ID"
+    )
     {
         ArgumentNullException.ThrowIfNull(events);
         ArgumentNullException.ThrowIfNull(requestId);
