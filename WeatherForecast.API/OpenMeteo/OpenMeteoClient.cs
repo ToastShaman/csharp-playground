@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Polly;
 
 namespace OpenMeteo;
 
@@ -41,6 +42,25 @@ public class OpenMeteoApi(Uri baseUri, HttpClient client) : IOpenMeteoApi
         using var response = await _client.SendAsync(request, cancellationToken);
 
         return await action.FromResponseAsync(response, cancellationToken);
+    }
+}
+
+public class ResilientOpenMeteoApi(ResiliencePipeline pipeline, IOpenMeteoApi api) : IOpenMeteoApi
+{
+    private readonly IOpenMeteoApi api = api ?? throw new ArgumentNullException(nameof(api));
+
+    public async Task<R> ExecuteAsync<R>(
+        IOpenMeteoAction<R> action,
+        CancellationToken cancellationToken
+    )
+        where R : class
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        return await pipeline.ExecuteAsync(
+            async state => await api.ExecuteAsync(action, cancellationToken),
+            cancellationToken
+        );
     }
 }
 

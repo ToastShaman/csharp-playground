@@ -2,6 +2,8 @@ using Events;
 using Events.Http;
 using Middleware;
 using OpenMeteo;
+using Polly;
+using Polly.Retry;
 
 var events = EventFilters
     .AddServiceName("WeatherForecast.API")
@@ -35,7 +37,19 @@ builder.Services.AddSingleton<IOpenMeteoApi>(provider =>
             ?? throw new InvalidOperationException("Missing WeatherForecastAPI:BaseUrl")
     );
 
-    return new OpenMeteoApi(baseUrl, client);
+    return new ResilientOpenMeteoApi(
+        new ResiliencePipelineBuilder()
+            .AddRetry(
+                new RetryStrategyOptions
+                {
+                    MaxRetryAttempts = 3,
+                    Delay = TimeSpan.FromSeconds(2),
+                    MaxDelay = TimeSpan.FromSeconds(30),
+                }
+            )
+            .Build(),
+        new OpenMeteoApi(baseUrl, client)
+    );
 });
 
 var app = builder.Build();
