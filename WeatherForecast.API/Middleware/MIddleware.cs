@@ -8,7 +8,7 @@ public record IncomingHttpRequest(
     string Method,
     string Path,
     Dictionary<string, StringValues> RequestHeaders
-) : IEvent { };
+) : IEvent;
 
 public record OutgoingHttpResponse(
     string Id,
@@ -16,7 +16,7 @@ public record OutgoingHttpResponse(
     string Method,
     string Path,
     Dictionary<string, StringValues> ResponseHeaders
-) : IEvent { };
+) : IEvent;
 
 public record HttpContextLens(Func<HttpContext, string> Get, Action<HttpContext, string> Set);
 
@@ -29,9 +29,8 @@ public static class Middlewares
 
     public static Func<HttpContext, RequestDelegate, Task> RequestId(
         string headerName = "X-Request-ID"
-    )
-    {
-        return async (context, next) =>
+    ) =>
+        async (context, next) =>
         {
             var existingRequestId = context.Request.Headers[headerName].FirstOrDefault();
 
@@ -43,11 +42,9 @@ public static class Middlewares
             RequestIdLens.Set(context, requestId);
             await next(context);
         };
-    }
 
-    public static Func<HttpContext, RequestDelegate, Task> EventMiddleware(IEvents events)
-    {
-        return async (context, next) =>
+    public static Func<HttpContext, RequestDelegate, Task> EventMiddleware(IEvents events) =>
+        async (context, next) =>
         {
             var id = RequestIdLens.Get(context);
 
@@ -86,5 +83,4 @@ public static class Middlewares
                 )
             );
         };
-    }
 }
