@@ -1,8 +1,7 @@
 using Events;
-using Events.Http;
+using Microsoft.Extensions.Options;
 using Middleware;
 using OpenMeteo;
-using Polly;
 using Polly.Retry;
 
 var events = EventFilters
@@ -12,27 +11,34 @@ var events = EventFilters
     .Then(new JsonEvents());
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
 builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IOpenMeteoApi>(provider =>
+
+builder
+    .Services.AddOptions<OpenMeteoConfig>()
+    .Bind(builder.Configuration.GetSection("OpenMeteo"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddSingleton(provider =>
 {
+    var config =
+        provider.GetService<IOptions<OpenMeteoConfig>>()?.Value
+        ?? throw new InvalidOperationException("OpenMeteoConfig not configured");
+
+    Console.WriteLine($"Configured OpenMeteo API with BaseUrl: {config}");
+
     var httpContextAccessor =
         provider.GetService<IHttpContextAccessor>()
         ?? throw new InvalidOperationException("No HttpContextAccessor");
 
     var requestId = OpenMeteoClientFactory.RequestIdFromContext(httpContextAccessor);
 
-    var client = OpenMeteoClientFactory.HttpClientFactory(
-        requestId,
-        TimeSpan.FromSeconds(5),
-        events
-    );
-
-    var baseUrl = new Uri(
-        builder.Configuration["WeatherForecastAPI:BaseUrl"]
-            ?? throw new InvalidOperationException("Missing WeatherForecastAPI:BaseUrl")
-    );
+    var client = OpenMeteoClientFactory.HttpClientFactory(requestId, config.Timeout, events);
 
     var retryOptions = new RetryStrategyOptions
     {
@@ -41,7 +47,7 @@ builder.Services.AddSingleton<IOpenMeteoApi>(provider =>
         MaxDelay = TimeSpan.FromSeconds(30),
     };
 
-    return OpenMeteoClientFactory.Create(baseUrl, retryOptions, client())();
+    return OpenMeteoClientFactory.Create(config.BaseUrl, retryOptions, client())();
 });
 
 var app = builder.Build();
