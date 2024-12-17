@@ -8,12 +8,11 @@ namespace OpenMeteo;
 
 public static class OpenMeteoClientFactory
 {
-    public static Func<string> RequestIdFromContext(IServiceProvider provider) =>
+    public static Func<string> RequestIdFromContext(IHttpContextAccessor accessor) =>
         () =>
         {
             var context =
-                provider.GetRequiredService<IHttpContextAccessor>().HttpContext
-                ?? throw new InvalidOperationException("No HttpContext");
+                accessor.HttpContext ?? throw new InvalidOperationException("No HttpContext");
 
             return Middlewares.RequestIdLens.Get(context);
         };

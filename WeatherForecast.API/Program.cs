@@ -17,7 +17,11 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IOpenMeteoApi>(provider =>
 {
-    var requestId = OpenMeteoClientFactory.RequestIdFromContext(provider);
+    var httpContextAccessor =
+        provider.GetService<IHttpContextAccessor>()
+        ?? throw new InvalidOperationException("No HttpContextAccessor");
+
+    var requestId = OpenMeteoClientFactory.RequestIdFromContext(httpContextAccessor);
 
     var client = OpenMeteoClientFactory.HttpClientFactory(
         requestId,
