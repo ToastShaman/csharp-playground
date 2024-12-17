@@ -17,39 +17,27 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IOpenMeteoApi>(provider =>
 {
-    string requestId()
-    {
-        var context =
-            provider.GetRequiredService<IHttpContextAccessor>().HttpContext
-            ?? throw new InvalidOperationException("No HttpContext");
-        return Middlewares.RequestIdLens.Get(context);
-    }
+    var requestId = OpenMeteoClientFactory.RequestIdFromContext(provider);
 
-    var handler = new LoggingHttpHandler(events, requestId)
-    {
-        InnerHandler = new HttpClientHandler(),
-    };
-
-    var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
+    var client = OpenMeteoClientFactory.HttpClientFactory(
+        requestId,
+        TimeSpan.FromSeconds(5),
+        events
+    );
 
     var baseUrl = new Uri(
         builder.Configuration["WeatherForecastAPI:BaseUrl"]
             ?? throw new InvalidOperationException("Missing WeatherForecastAPI:BaseUrl")
     );
 
-    return new ResilientOpenMeteoApi(
-        new ResiliencePipelineBuilder()
-            .AddRetry(
-                new RetryStrategyOptions
-                {
-                    MaxRetryAttempts = 3,
-                    Delay = TimeSpan.FromSeconds(2),
-                    MaxDelay = TimeSpan.FromSeconds(30),
-                }
-            )
-            .Build(),
-        new OpenMeteoApi(baseUrl, client)
-    );
+    var retryOptions = new RetryStrategyOptions
+    {
+        MaxRetryAttempts = 3,
+        Delay = TimeSpan.FromSeconds(2),
+        MaxDelay = TimeSpan.FromSeconds(30),
+    };
+
+    return OpenMeteoClientFactory.Create(baseUrl, retryOptions, client())();
 });
 
 var app = builder.Build();
