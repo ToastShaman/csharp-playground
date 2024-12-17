@@ -20,5 +20,6 @@ public class OpenMeteoConfig
     [Range(1, 10)]
     public required int MaxRetryAttempts { get; set; }
 
-    public override string ToString() => $"BaseUrl: {BaseUrl}, Timeout: {Timeout}, RetryDelay: {RetryDelay}, MaxDelay: {MaxDelay}, MaxRetryAttempts: {MaxRetryAttempts}";
+    public override string ToString() =>
+        $"BaseUrl: {BaseUrl}, Timeout: {Timeout}, RetryDelay: {RetryDelay}, MaxDelay: {MaxDelay}, MaxRetryAttempts: {MaxRetryAttempts}";
 }

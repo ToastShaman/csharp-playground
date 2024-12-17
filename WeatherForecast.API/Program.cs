@@ -42,9 +42,9 @@ builder.Services.AddSingleton(provider =>
 
     var retryOptions = new RetryStrategyOptions
     {
-        MaxRetryAttempts = 3,
-        Delay = TimeSpan.FromSeconds(2),
-        MaxDelay = TimeSpan.FromSeconds(30),
+        MaxRetryAttempts = config.MaxRetryAttempts,
+        Delay = config.RetryDelay,
+        MaxDelay = config.MaxDelay,
     };
 
     return OpenMeteoClientFactory.Create(config.BaseUrl, retryOptions, client())();
