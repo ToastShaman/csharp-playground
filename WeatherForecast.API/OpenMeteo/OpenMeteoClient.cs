@@ -20,11 +20,19 @@ public interface IOpenMeteoApi
         where R : class;
 }
 
-public class OpenMeteoApi(Uri baseUri, HttpClient client) : IOpenMeteoApi
+public class OpenMeteoApi : IOpenMeteoApi
 {
-    private readonly Uri _baseUri = baseUri ?? throw new ArgumentNullException(nameof(baseUri));
+    private readonly Uri _baseUri;
 
-    private readonly HttpClient _client = client ?? throw new ArgumentNullException(nameof(client));
+    private readonly HttpClient _client;
+
+    public OpenMeteoApi(Uri baseUri, HttpClient client)
+    {
+        ArgumentNullException.ThrowIfNull(baseUri);
+        ArgumentNullException.ThrowIfNull(client);
+        _baseUri = baseUri;
+        _client = client;
+    }
 
     public async Task<R> ExecuteAsync<R>(IOpenMeteoAction<R> action)
         where R : class => await ExecuteAsync(action, CancellationToken.None);
@@ -42,6 +50,29 @@ public class OpenMeteoApi(Uri baseUri, HttpClient client) : IOpenMeteoApi
         using var response = await _client.SendAsync(request, cancellationToken);
 
         return await action.FromResponseAsync(response, cancellationToken);
+    }
+}
+
+public class RecordingOpenMeteoApi : IOpenMeteoApi
+{
+    private readonly IOpenMeteoApi _next;
+
+    public List<IOpenMeteoAction<object>> Actions { get; } = [];
+
+    public RecordingOpenMeteoApi(IOpenMeteoApi next)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+        _next = next;
+    }
+
+    public async Task<R> ExecuteAsync<R>(
+        IOpenMeteoAction<R> action,
+        CancellationToken cancellationToken
+    )
+        where R : class
+    {
+        Actions.Add((IOpenMeteoAction<object>)action);
+        return await _next.ExecuteAsync(action, cancellationToken);
     }
 }
 
